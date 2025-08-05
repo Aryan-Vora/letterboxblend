@@ -3,9 +3,17 @@
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Film, Users, Heart, Sparkles, Zap } from "lucide-react"
+import { useEffect } from "react"
 import Link from "next/link"
 
 export default function HomePage() {
+  // hack to get render out of cold start
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}`)
+      .then((response) => response.json())
+      .then((data) => console.log(data))
+      .catch((error) => console.error("Error fetching API:", error))
+  }, [])
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-red-950 to-gray-900 overflow-hidden">
       {/* Animated background elements */}

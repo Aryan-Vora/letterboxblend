@@ -55,7 +55,7 @@ export default function BlendPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/mock', {
+      const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + 'mock', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ export default function BlendPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/blend', {
+      const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + 'blend', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
