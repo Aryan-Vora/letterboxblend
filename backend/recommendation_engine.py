@@ -460,7 +460,7 @@ class RecommendationEngine:
             List of recommended movies with scores, sorted by combined score
         """
         # print(
-        #     f"Starting blend with {len(user1_data)} + {len(user2_data)} user movies")
+        #     f"Starting blend with {len(user1_data)} + {len(user2_data)} user movies (limited to top 100 rated movies per user for OMDB processing)")
         # print(f"Database contains {len(self.movies_database)} movies")
 
         user1_watched = self.get_watched_movies(user1_data)

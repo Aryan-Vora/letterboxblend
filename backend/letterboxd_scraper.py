@@ -7,6 +7,7 @@ import aiohttp
 from typing import List, Dict, Any, Tuple
 from fastapi import HTTPException
 from utils import convert_stars_to_decimal
+from config import Config
 
 
 async def fetch_html_from_url(url: str) -> str:
@@ -22,7 +23,10 @@ async def fetch_html_from_url(url: str) -> str:
 
 
 def extract_movies_with_ratings(html_content: str) -> List[Tuple[str, float]]:
-    """Extract movie titles and their corresponding star ratings from HTML content."""
+    """
+    Extract movie titles and their corresponding star ratings from HTML content.
+    Returns only the top-rated movies (limited by Config.MAX_MOVIES_PER_USER) to reduce OMDB API calls.
+    """
     movie_pattern = r'<li class="poster-container">(.*?)</li>'
     movie_containers = re.findall(movie_pattern, html_content, re.DOTALL)
 
@@ -41,7 +45,13 @@ def extract_movies_with_ratings(html_content: str) -> List[Tuple[str, float]]:
                 if decimal_rating is not None:
                     movies_with_ratings.append((title, decimal_rating))
 
-    return movies_with_ratings
+    movies_with_ratings.sort(key=lambda x: x[1], reverse=True)
+    limited_movies = movies_with_ratings[:Config.MAX_MOVIES_PER_USER]
+
+    print(
+        f"Extracted {len(movies_with_ratings)} total movies, limiting to top {len(limited_movies)} for OMDB processing")
+
+    return limited_movies
 
 
 async def scrape_user_preferences(url: str) -> Dict[str, Any]:
