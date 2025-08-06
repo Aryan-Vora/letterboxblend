@@ -71,7 +71,7 @@ export default function HomePage() {
             <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
               <Film className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">MovieBlend</span>
+            <span className="text-2xl font-bold text-white">CinemaBlend</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <Link href="#how-it-works" className="text-white/80 hover:text-white transition-colors">
@@ -102,7 +102,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Movie Blend
+              Cinema Blend
             </motion.h1>
 
             <motion.p
@@ -314,7 +314,7 @@ export default function HomePage() {
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-orange-400 via-red-400 to-red-500 bg-clip-text text-transparent">
-                  About MovieBlend
+                  About CinemaBlend
                 </h2>
                 <p className="text-xl text-white/80">Bringing movie lovers together, one perfect match at a time</p>
               </div>
@@ -328,7 +328,7 @@ export default function HomePage() {
                   <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-red-500/20">
                     <h3 className="text-2xl font-bold text-white mb-4">Our Mission</h3>
                     <p className="text-white/80 leading-relaxed mb-4">
-                      We believe that the best movie experiences happen when shared with others. MovieBlend was created
+                      We believe that the best movie experiences happen when shared with others. CinemaBlend was created
                       to solve the age-old problem: "What should we watch tonight?"
                     </p>
                     <p className="text-white/80 leading-relaxed">
@@ -380,7 +380,7 @@ export default function HomePage() {
                 <p className="text-white/80 leading-relaxed max-w-2xl mx-auto">
                   We're passionate cinephiles who understand that great movies are meant to be shared. Whether you're
                   planning a date night, a movie marathon with friends, or just trying to find something everyone can
-                  agree on, MovieBlend takes the stress out of choosing and puts the joy back into watching.
+                  agree on, CinemaBlend takes the stress out of choosing and puts the joy back into watching.
                 </p>
               </motion.div>
             </div>

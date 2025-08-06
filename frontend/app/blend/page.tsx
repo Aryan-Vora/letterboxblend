@@ -174,7 +174,7 @@ export default function BlendPage() {
             <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
               <Film className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">MovieBlend</span>
+            <span className="text-2xl font-bold text-white">CinemaBlend</span>
           </Link>
         </motion.header>
 
