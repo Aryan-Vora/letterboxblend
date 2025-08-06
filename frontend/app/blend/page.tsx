@@ -324,7 +324,7 @@ export default function BlendPage() {
           >
             <p className="text-white/60 text-sm mb-2">Example format:</p>
             <code className="text-white/80 bg-white/10 px-4 py-2 rounded-lg text-sm">
-              https://letterboxd.com/rbaveje/films/
+              https://letterboxd.com/yourprofile/films/
             </code>
           </motion.div>
         </div>
