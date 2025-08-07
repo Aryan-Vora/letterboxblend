@@ -1,39 +1,126 @@
 """
 OMDB API client for fetching movie data
-Handles all interactions with the OMDB API
-
+Handles all interactions with the OMDB API with key rotation and failure tracking
 """
 import aiohttp
+import re
 from typing import Dict, Any, List, Tuple, Optional
 from utils import parse_year_from_title, clean_movie_title
 from config import Config
 
 
-class OMDBClient:
-    """Client for interacting with the OMDB API."""
+class APIBudgetExhausted(Exception):
+    """Raised when all API keys have been exhausted."""
+    pass
 
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or Config.OMDB_API_KEY
+
+class OMDBClient:
+    """Client for interacting with the OMDB API with key rotation."""
+
+    def __init__(self):
+        self.api_keys = Config.get_api_keys()
+        self.current_key_index = 0
+        self.consecutive_failures = 0
+        self.max_consecutive_failures = 3
         self.base_url = Config.OMDB_BASE_URL
         self.timeout = Config.REQUEST_TIMEOUT
         self.max_retries = Config.MAX_RETRIES
 
-    def _format_movie_title(self, movie_slug: str) -> str:
-        """Convert movie slug to proper title format for OMDB API."""
-        return movie_slug.replace('-', ' ').title()
+    def get_current_api_key(self) -> Optional[str]:
+        """Get the current API key."""
+        if not self.api_keys:
+            return None
+        return self.api_keys[self.current_key_index]
 
-    async def _make_api_request(self, session: aiohttp.ClientSession, title: str, year: str = None) -> Dict[str, Any]:
-        """Make a request to the OMDB API."""
+    def rotate_api_key(self):
+        """Rotate to the next API key."""
+        if not self.api_keys:
+            return
+
+        self.current_key_index = (
+            self.current_key_index + 1) % len(self.api_keys)
+        print(f"Rotated to API key {self.current_key_index + 1}")
+
+    def _is_rate_limit_error(self, response_data: Dict[str, Any]) -> bool:
+        """Check if the response indicates a rate limit or quota error."""
+        if response_data.get('Response') == 'False':
+            error_msg = response_data.get('Error', '').lower()
+            return any(phrase in error_msg for phrase in [
+                'daily limit',
+                'quota',
+                'rate limit',
+                'too many requests',
+                'request limit',
+                'api limit'
+            ])
+        return False
+
+    async def _make_api_request_with_rotation(self, session: aiohttp.ClientSession, title: str, year: str = None) -> Dict[str, Any]:
+        """Make a request to the OMDB API with key rotation on failure."""
+        if not self.api_keys:
+            raise APIBudgetExhausted("No API keys available")
+
+        if self.consecutive_failures >= self.max_consecutive_failures:
+            raise APIBudgetExhausted(
+                "All API keys exhausted - please try again tomorrow")
+
         params = {
             't': title,
-            'apikey': self.api_key
+            'apikey': self.get_current_api_key()
         }
         if year:
             params['y'] = year
 
         timeout = aiohttp.ClientTimeout(total=self.timeout)
-        async with session.get(self.base_url, params=params, timeout=timeout) as response:
-            return await response.json()
+
+        try:
+            async with session.get(self.base_url, params=params, timeout=timeout) as response:
+                if response.status == 401:
+                    print(
+                        f"API key {self.current_key_index + 1} unauthorized, rotating...")
+                    self.rotate_api_key()
+                    self.consecutive_failures += 1
+
+                    if self.consecutive_failures >= self.max_consecutive_failures:
+                        raise APIBudgetExhausted(
+                            "All API keys exhausted - please try again tomorrow")
+
+                    return await self._make_api_request_with_rotation(session, title, year)
+
+                response_data = await response.json()
+
+                if self._is_rate_limit_error(response_data):
+                    print(
+                        f"API key {self.current_key_index + 1} hit rate limit, rotating...")
+                    self.rotate_api_key()
+                    self.consecutive_failures += 1
+
+                    if self.consecutive_failures >= self.max_consecutive_failures:
+                        raise APIBudgetExhausted(
+                            "All API keys exhausted - please try again tomorrow")
+
+                    return await self._make_api_request_with_rotation(session, title, year)
+
+                if response_data.get('Response') == 'True':
+                    self.consecutive_failures = 0
+
+                return response_data
+
+        except aiohttp.ClientError as e:
+            print(
+                f"Network error with API key {self.current_key_index + 1}: {e}")
+            self.rotate_api_key()
+            self.consecutive_failures += 1
+
+            if self.consecutive_failures >= self.max_consecutive_failures:
+                raise APIBudgetExhausted(
+                    "All API keys exhausted - please try again tomorrow")
+
+            return await self._make_api_request_with_rotation(session, title, year)
+
+    def _format_movie_title(self, movie_slug: str) -> str:
+        """Convert movie slug to proper title format for OMDB API."""
+        return movie_slug.replace('-', ' ').title()
 
     async def get_movie_data(self, movie_slug: str, letterbox_rating: float) -> Dict[str, Any]:
         """
@@ -46,7 +133,7 @@ class OMDBClient:
         Returns:
             Dictionary with enriched movie data
         """
-        if not self.api_key:
+        if not self.api_keys:
             return self._create_minimal_movie_data(movie_slug, letterbox_rating)
 
         movie_title = self._format_movie_title(movie_slug)
@@ -54,7 +141,7 @@ class OMDBClient:
 
         async with aiohttp.ClientSession() as session:
             try:
-                omdb_data = await self._make_api_request(session, cleaned_title)
+                omdb_data = await self._make_api_request_with_rotation(session, cleaned_title)
 
                 if omdb_data.get('Response') == 'True':
                     return self._create_movie_data(omdb_data, letterbox_rating, movie_slug)
@@ -62,13 +149,15 @@ class OMDBClient:
                 title_without_year, extracted_year = parse_year_from_title(
                     cleaned_title)
                 if extracted_year:
-                    omdb_data = await self._make_api_request(session, title_without_year)
+                    omdb_data = await self._make_api_request_with_rotation(session, title_without_year)
 
                     if omdb_data.get('Response') == 'True':
                         return self._create_movie_data(omdb_data, letterbox_rating, movie_slug)
 
                 return self._create_minimal_movie_data(movie_slug, letterbox_rating)
 
+            except APIBudgetExhausted:
+                raise
             except Exception as e:
                 print(f"Error fetching OMDB data for {movie_title}: {e}")
                 return self._create_minimal_movie_data(movie_slug, letterbox_rating)
@@ -119,11 +208,19 @@ class OMDBClient:
 
         Returns:
             List of enriched movie dictionaries
+
+        Raises:
+            APIBudgetExhausted: When all API keys are exhausted
         """
         enriched_movies = []
 
         for movie_slug, letterbox_rating in movies_with_ratings:
-            movie_data = await self.get_movie_data(movie_slug, letterbox_rating)
-            enriched_movies.append(movie_data)
+            try:
+                movie_data = await self.get_movie_data(movie_slug, letterbox_rating)
+                enriched_movies.append(movie_data)
+            except APIBudgetExhausted:
+                print(
+                    f"API budget exhausted while processing movie: {movie_slug}")
+                raise
 
         return enriched_movies

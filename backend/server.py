@@ -13,7 +13,7 @@ from typing import List
 
 from config import Config
 from letterboxd_scraper import extract_movies_with_ratings, fetch_html_from_url
-from omdb_client import OMDBClient
+from omdb_client import OMDBClient, APIBudgetExhausted
 from recommendation_engine import blend_movies
 
 
@@ -81,7 +81,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -199,6 +198,11 @@ async def blend_preferences(request: BlendRequest):
 
         try:
             user1_data = await omdb_client.enrich_movies_batch(user1_movies_ratings)
+        except APIBudgetExhausted:
+            raise HTTPException(
+                status_code=429,
+                detail="API budget spent - please try again tomorrow. All available API keys have been exhausted."
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -217,6 +221,11 @@ async def blend_preferences(request: BlendRequest):
 
         try:
             user2_data = await omdb_client.enrich_movies_batch(user2_movies_ratings)
+        except APIBudgetExhausted:
+            raise HTTPException(
+                status_code=429,
+                detail="API budget spent - please try again tomorrow. All available API keys have been exhausted."
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=500,

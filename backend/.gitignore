@@ -7,5 +7,5 @@ __pycache__/
 *.tsv
 rbavejedata.json
 vihaanbingesdata.json
-test_endpoints.py
 extradata
+test_*

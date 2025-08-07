@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Film, ArrowRight, User, LinkIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function BlendPage() {
   const [profile1, setProfile1] = useState("")
@@ -63,7 +64,21 @@ export default function BlendPage() {
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to get mock data: ${response.statusText}`)
+        const errorData = await response.json()
+
+        if (response.status === 429) {
+          toast.error("API Budget Exhausted", {
+            description: "All API keys have been used. Please try again tomorrow.",
+            duration: 5000,
+          })
+        } else {
+          toast.error("Error", {
+            description: errorData.detail || `Failed to get mock data: ${response.statusText}`,
+            duration: 4000,
+          })
+        }
+
+        return
       }
 
       const recommendations = await response.json()
@@ -77,10 +92,18 @@ export default function BlendPage() {
       // Store the results in localStorage to pass to results page
       localStorage.setItem('blendResults', JSON.stringify(recommendations))
 
+      toast.success("Mock Data Loaded!", {
+        description: `Loaded ${recommendations.length} sample movie recommendations.`,
+        duration: 3000,
+      })
+
       router.push("/results")
     } catch (error) {
       console.error('Error getting mock data:', error)
-      alert('Failed to get mock data. Please run a blend operation first to generate mock data.')
+      toast.error("Network Error", {
+        description: "Failed to connect to the server. Please try again.",
+        duration: 4000,
+      })
     } finally {
       setIsLoading(false)
     }
@@ -107,7 +130,20 @@ export default function BlendPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || `Failed to blend profiles: ${response.statusText}`)
+
+        if (response.status === 429) {
+          toast.error("API Budget Exhausted", {
+            description: "All API keys have been used. Please try again tomorrow.",
+            duration: 5000,
+          })
+        } else {
+          toast.error("Blend Failed", {
+            description: errorData.detail || `Failed to blend profiles: ${response.statusText}`,
+            duration: 4000,
+          })
+        }
+
+        return
       }
 
       const recommendations = await response.json()
@@ -121,10 +157,18 @@ export default function BlendPage() {
       // Store the results in localStorage to pass to results page
       localStorage.setItem('blendResults', JSON.stringify(recommendations))
 
+      toast.success("Blend Complete!", {
+        description: `Found ${recommendations.length} perfect movie matches for you both.`,
+        duration: 3000,
+      })
+
       router.push("/results")
     } catch (error) {
       console.error('Error blending profiles:', error)
-      alert('Failed to blend profiles. Please check the URLs and try again.')
+      toast.error("Network Error", {
+        description: "Failed to connect to the server. Please try again.",
+        duration: 4000,
+      })
     } finally {
       setIsLoading(false)
     }

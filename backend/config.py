@@ -13,7 +13,10 @@ class Config:
     SERVER_HOST = "0.0.0.0"
     SERVER_PORT = 8000
 
-    OMDB_API_KEY = os.getenv('OMDB_API_KEY')
+    OMDB_API_KEY_1 = os.getenv('OMDB_API_KEY_1')
+    OMDB_API_KEY_2 = os.getenv('OMDB_API_KEY_2')
+    OMDB_API_KEY_3 = os.getenv('OMDB_API_KEY_3')
+
     OMDB_BASE_URL = "https://www.omdbapi.com/"
 
     MOVIES_DATABASE = "movies_with_ratings.json"
@@ -36,10 +39,22 @@ class Config:
     MAX_RETRIES = 3
 
     @classmethod
+    def get_api_keys(cls):
+        """Get list of available API keys."""
+        keys = []
+        for key in [cls.OMDB_API_KEY_1, cls.OMDB_API_KEY_2, cls.OMDB_API_KEY_3]:
+            if key:
+                keys.append(key)
+        return keys
+
+    @classmethod
     def validate(cls):
         """Validate configuration settings."""
-        if not cls.OMDB_API_KEY:
-            print("Warning: OMDB_API_KEY not set. API functionality will be limited.")
+        api_keys = cls.get_api_keys()
+        if not api_keys:
+            print("Warning: No OMDB API keys set. API functionality will be limited.")
+        else:
+            print(f"Found {len(api_keys)} OMDB API keys")
 
         if not os.path.exists(cls.MOVIES_DATABASE):
             print(f"Warning: Movies database {cls.MOVIES_DATABASE} not found.")
