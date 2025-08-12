@@ -17,42 +17,30 @@ export default function ResultsPage() {
   useEffect(() => {
     // Load results from localStorage
     const storedResults = localStorage.getItem('blendResults')
-    console.log('Stored results from localStorage:', storedResults)
 
     if (storedResults) {
       try {
         const results = JSON.parse(storedResults)
-        console.log('Parsed results:', results)
-        console.log('Number of movies:', results.length)
-        if (results.length > 0) {
-          console.log('First movie:', results[0])
-        }
         setMovies(results)
         setIsLoading(false)
       } catch (error) {
-        console.error('Error parsing stored results:', error)
         setIsLoading(false)
       }
     } else {
-      console.log('No stored results found in localStorage')
       setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    console.log('Revealing effect - isLoading:', isLoading, 'isRevealing:', isRevealing, 'currentIndex:', currentIndex, 'movies.length:', movies.length)
 
     if (!isLoading && isRevealing && currentIndex < movies.length) {
-      console.log('Setting timer to reveal next movie')
       const timer = setTimeout(() => {
         setCurrentIndex((prev) => {
-          console.log('Revealing movie index:', prev + 1)
           return prev + 1
         })
       }, 800)
       return () => clearTimeout(timer)
     } else if (currentIndex >= movies.length && movies.length > 0) {
-      console.log('All movies revealed, stopping reveal process')
       setIsRevealing(false)
     }
   }, [currentIndex, isRevealing, movies.length, isLoading])

@@ -73,7 +73,7 @@ export default function BlendPage() {
           })
         } else {
           toast.error("Error", {
-            description: errorData.detail || `Failed to get mock data: ${response.statusText}`,
+            description: errorData.detail || `Failed to get example data: ${response.statusText}`,
             duration: 4000,
           })
         }
@@ -82,24 +82,16 @@ export default function BlendPage() {
       }
 
       const recommendations = await response.json()
-
-      console.log('Mock API Response:', recommendations)
-      console.log('Number of mock recommendations:', recommendations.length)
-      if (recommendations.length > 0) {
-        console.log('First mock recommendation:', recommendations[0])
-      }
-
-      // Store the results in localStorage to pass to results page
       localStorage.setItem('blendResults', JSON.stringify(recommendations))
 
-      toast.success("Mock Data Loaded!", {
+      toast.success("Data Loaded!", {
         description: `Loaded ${recommendations.length} sample movie recommendations.`,
         duration: 3000,
       })
 
       router.push("/results")
     } catch (error) {
-      console.error('Error getting mock data:', error)
+      console.error('Error getting example data:', error)
       toast.error("Network Error", {
         description: "Failed to connect to the server. Please try again.",
         duration: 4000,
@@ -147,14 +139,6 @@ export default function BlendPage() {
       }
 
       const recommendations = await response.json()
-
-      console.log('API Response:', recommendations)
-      console.log('Number of recommendations:', recommendations.length)
-      if (recommendations.length > 0) {
-        console.log('First recommendation:', recommendations[0])
-      }
-
-      // Store the results in localStorage to pass to results page
       localStorage.setItem('blendResults', JSON.stringify(recommendations))
 
       toast.success("Blend Complete!", {
@@ -164,7 +148,6 @@ export default function BlendPage() {
 
       router.push("/results")
     } catch (error) {
-      console.error('Error blending profiles:', error)
       toast.error("Network Error", {
         description: "Failed to connect to the server. Please try again.",
         duration: 4000,
@@ -347,11 +330,11 @@ export default function BlendPage() {
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
                       />
-                      Loading mock data...
+                      Loading data...
                     </motion.div>
                   ) : (
                     <>
-                      Use Mock Data (For Testing)
+                      Use Example Profiles
                     </>
                   )}
                 </Button>
