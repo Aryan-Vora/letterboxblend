@@ -17,35 +17,19 @@ export default function BlendPage() {
   const [errors, setErrors] = useState<{ profile1?: string, profile2?: string }>({})
   const router = useRouter()
 
-  const validateLetterboxdUrl = (url: string): boolean => {
-    if (!url) return false
-
-    // Remove trailing slash for consistent checking
-    const cleanUrl = url.replace(/\/$/, '')
-
-    // Check if it's a valid Letterboxd films URL
-    const letterboxdPattern = /^https:\/\/letterboxd\.com\/[a-zA-Z0-9_-]+\/films$/
-    return letterboxdPattern.test(cleanUrl)
-  }
-
+  // Allow any input for profile fields, only require both are filled and not identical
   const validateUrls = (): boolean => {
     const newErrors: { profile1?: string, profile2?: string } = {}
 
     if (!profile1) {
-      newErrors.profile1 = "Please enter a Letterboxd profile URL"
-    } else if (!validateLetterboxdUrl(profile1)) {
-      newErrors.profile1 = "Please enter a valid Letterboxd films URL (e.g., https://letterboxd.com/username/films/)"
+      newErrors.profile1 = "Please enter a profile."
     }
-
     if (!profile2) {
-      newErrors.profile2 = "Please enter a Letterboxd profile URL"
-    } else if (!validateLetterboxdUrl(profile2)) {
-      newErrors.profile2 = "Please enter a valid Letterboxd films URL (e.g., https://letterboxd.com/username/films/)"
+      newErrors.profile2 = "Please enter a profile."
     }
-
     if (profile1 && profile2 && profile1 === profile2) {
-      newErrors.profile1 = "Please enter different profile URLs"
-      newErrors.profile2 = "Please enter different profile URLs"
+      newErrors.profile1 = "Please enter different profiles."
+      newErrors.profile2 = "Please enter different profiles."
     }
 
     setErrors(newErrors)
@@ -101,12 +85,24 @@ export default function BlendPage() {
     }
   }
 
+  const toLetterboxdFilmsUrl = (input: string) => {
+    const s = input.trim();
+    if (/^https?:\/\/letterboxd\.com\/[a-zA-Z0-9_-]+\/films\/?$/.test(s)) return s.endsWith('/') ? s : s + '/';
+    const match = s.match(/^https?:\/\/letterboxd\.com\/([a-zA-Z0-9_-]+)\/?$/);
+    if (match) return `https://letterboxd.com/${match[1]}/films/`;
+    if (/^[a-zA-Z0-9_-]+$/.test(s)) return `https://letterboxd.com/${s}/films/`;
+    return s;
+  };
+
   const handleBlend = async () => {
     if (!validateUrls()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
+
+    const user1_url = toLetterboxdFilmsUrl(profile1);
+    const user2_url = toLetterboxdFilmsUrl(profile2);
 
     try {
       const response = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + 'blend', {
@@ -115,47 +111,47 @@ export default function BlendPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user1_url: profile1,
-          user2_url: profile2,
+          user1_url,
+          user2_url,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
 
         if (response.status === 429) {
           toast.error("API Budget Exhausted", {
             description: "All API keys have been used. Please try again tomorrow.",
             duration: 5000,
-          })
+          });
         } else {
           toast.error("Blend Failed", {
             description: errorData.detail || `Failed to blend profiles: ${response.statusText}`,
             duration: 4000,
-          })
+          });
         }
 
-        return
+        return;
       }
 
-      const recommendations = await response.json()
-      localStorage.setItem('blendResults', JSON.stringify(recommendations))
+      const recommendations = await response.json();
+      localStorage.setItem('blendResults', JSON.stringify(recommendations));
 
       toast.success("Blend Complete!", {
         description: `Found ${recommendations.length} perfect movie matches for you both.`,
         duration: 3000,
-      })
+      });
 
-      router.push("/results")
+      router.push("/results");
     } catch (error) {
       toast.error("Network Error", {
         description: "Failed to connect to the server. Please try again.",
         duration: 4000,
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-red-950 to-gray-900 overflow-hidden">
@@ -217,7 +213,7 @@ export default function BlendPage() {
               Create Your Blend
             </h1>
             <p className="text-xl text-white/80 mb-8">
-              Enter two Letterboxd profile links to discover your perfect movie matches
+              Enter two Letterboxd profile usernames to discover your perfect movie matches
             </p>
           </motion.div>
 
@@ -234,14 +230,14 @@ export default function BlendPage() {
                   <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center">
                     <User className="w-3 h-3 text-white" />
                   </div>
-                  First Letterboxd Profile
+                  First Profile
                 </Label>
                 <div className="relative">
                   <LinkIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
                   <Input
                     id="profile1"
                     type="url"
-                    placeholder="https://letterboxd.com/username/films/"
+                    placeholder="Username"
                     value={profile1}
                     onChange={(e) => {
                       setProfile1(e.target.value)
@@ -265,14 +261,14 @@ export default function BlendPage() {
                   <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
                     <User className="w-3 h-3 text-white" />
                   </div>
-                  Second Letterboxd Profile
+                  Second Profile
                 </Label>
                 <div className="relative">
                   <LinkIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
                   <Input
                     id="profile2"
                     type="url"
-                    placeholder="https://letterboxd.com/username/films/"
+                    placeholder="Username"
                     value={profile2}
                     onChange={(e) => {
                       setProfile2(e.target.value)
@@ -351,7 +347,7 @@ export default function BlendPage() {
           >
             <p className="text-white/60 text-sm mb-2">Example format:</p>
             <code className="text-white/80 bg-white/10 px-4 py-2 rounded-lg text-sm">
-              https://letterboxd.com/yourprofile/films/
+              vihaanbinges
             </code>
           </motion.div>
         </div>
