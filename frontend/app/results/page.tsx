@@ -99,15 +99,15 @@ export default function ResultsPage() {
             <span className="text-2xl font-bold text-white">CinemaBlend</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               className="border-red-500/20 text-white hover:bg-red-500/10 bg-transparent"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share Blend
-            </Button>
-            <Link href="/blend">
+            </Button> */}
+            <Link href="/">
               <Button
                 variant="outline"
                 size="sm"
